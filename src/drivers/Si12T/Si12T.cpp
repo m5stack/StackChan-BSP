@@ -68,6 +68,8 @@ int8_t Si12T::SI12T_Set_Sensitivity(uint8_t sens_type, uint8_t sens_level)
     if (sens_type < SI12T_Type_Low || sens_type > SI12T_Type_High) {
         return -1;
     }
+    this->sens_type  = sens_type;   // cache so getters reflect the current setting
+    this->sens_level = sens_level;
     uint8_t value = 0x00;
     if (sens_type == SI12T_Type_High) {
         switch (sens_level) {
@@ -163,6 +165,27 @@ void Si12T::SI12T_Reset_Reference(void)
     SI12T_Writeregister(SI12T_REF_RST2_ADDR, 0x0F);  // channel 9-12 update
     SI12T_Writeregister(SI12T_REF_RST1_ADDR, 0x00);
     SI12T_Writeregister(SI12T_REF_RST2_ADDR, 0x00);
+}
+
+int Si12T::SI12T_Read_Sensitivity(void)
+{
+    uint8_t data = 0;
+    if (!SI12T_Readregister(SI12T_SENSITIVITY1_ADDR, &data)) return -1;
+    return data;
+}
+
+int Si12T::SI12T_Read_Config(void)
+{
+    uint8_t data = 0;
+    if (!SI12T_Readregister(SI12T_CTRL1_ADDR, &data)) return -1;
+    return data;
+}
+
+int Si12T::SI12T_Read_Ctrl(void)
+{
+    uint8_t data = 0;
+    if (!SI12T_Readregister(SI12T_CTRL2_ADDR, &data)) return -1;
+    return data;
 }
 
 void Si12T::set_Ctrl2(void)

@@ -140,10 +140,44 @@ void TouchSensor_Class::setSleep(bool enable)
     } else {
         _touch_sensor->sleep_disable();
     }
+    _asleep = enable;
 }
 
 void TouchSensor_Class::recalibrate()
 {
     if (!_touch_sensor) return;
     _touch_sensor->SI12T_Reset_Reference();
+}
+
+SI12T_Type TouchSensor_Class::getSensitivityType()
+{
+    if (!_touch_sensor) return SI12T_Type_Low;
+    // SEN register low nibble (channel 1): bit3 = HL (type), bits[2:0] = level.
+    int raw = _touch_sensor->SI12T_Read_Sensitivity();
+    if (raw < 0) return static_cast<SI12T_Type>(_touch_sensor->sens_type);  // read failed → cached
+    return (raw & 0x08) ? SI12T_Type_High : SI12T_Type_Low;
+}
+
+SI12T_Sensitivity_Level TouchSensor_Class::getSensitivityLevel()
+{
+    if (!_touch_sensor) return SI12T_Sensitivity_Level_0;
+    int raw = _touch_sensor->SI12T_Read_Sensitivity();
+    if (raw < 0) return static_cast<SI12T_Sensitivity_Level>(_touch_sensor->sens_level);
+    return static_cast<SI12T_Sensitivity_Level>(raw & 0x07);
+}
+
+uint8_t TouchSensor_Class::getResponseCycles()
+{
+    if (!_touch_sensor) return 0;
+    int raw = _touch_sensor->SI12T_Read_Config();  // CFIG: ... | RTC[2:0]
+    if (raw < 0) return _touch_sensor->cfg_rtc;     // read failed → cached
+    return static_cast<uint8_t>(raw & 0x07);
+}
+
+bool TouchSensor_Class::getSleep()
+{
+    if (!_touch_sensor) return _asleep;
+    int raw = _touch_sensor->SI12T_Read_Ctrl();  // CTRL: bit2 = SLEEP
+    if (raw < 0) return _asleep;                  // read failed → cached
+    return (raw & 0x04) != 0;
 }

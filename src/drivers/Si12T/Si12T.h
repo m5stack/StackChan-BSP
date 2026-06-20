@@ -64,6 +64,10 @@ public:
     int8_t SI12T_Set_Config(uint8_t ms, uint8_t ftc, uint8_t ilc, uint8_t rtc);
     // Force a reference-value (baseline) update on all channels (Ref_rst 0x0A/0x0B).
     void SI12T_Reset_Reference(void);
+    // Read-back helpers. Return the raw register byte (0-255), or -1 on I2C read failure.
+    int SI12T_Read_Sensitivity(void);  // SEN1 (0x02)
+    int SI12T_Read_Config(void);       // CFIG (0x08)
+    int SI12T_Read_Ctrl(void);         // CTRL (0x09)
     void set_Ctrl1(void);
     void set_Ctrl2(void);
     void sleep_enable(void);

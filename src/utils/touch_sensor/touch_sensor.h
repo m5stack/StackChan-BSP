@@ -82,6 +82,35 @@ public:
      */
     void recalibrate();
 
+    /**
+     * @brief Get the sensitivity type, read back from the chip.
+     *
+     * @return SI12T_Type_Low or SI12T_Type_High (last set value if the read fails).
+     */
+    SI12T_Type getSensitivityType();
+
+    /**
+     * @brief Get the sensitivity level, read back from the chip.
+     *
+     * @return SI12T_Sensitivity_Level_0 .. _7 (last set value if the read fails).
+     */
+    SI12T_Sensitivity_Level getSensitivityLevel();
+
+    /**
+     * @brief Get the response-time control (RTC), read back from the chip.
+     *        Response cycle is (value + 2).
+     *
+     * @return RTC[2:0], range 0-7 (last set value if the read fails).
+     */
+    uint8_t getResponseCycles();
+
+    /**
+     * @brief Whether the sensor is in low-power sleep scan mode, read back from the chip.
+     *
+     * @return true if sleeping (last set state if the read fails).
+     */
+    bool getSleep();
+
 private:
     std::unique_ptr<Si12T> _touch_sensor;
     std::array<uint8_t, 3> _intensities;
@@ -92,6 +121,7 @@ private:
     bool _touched_flag[3];
     bool _in_gesture;
     uint32_t _last_touched_time;
+    bool _asleep = false;
 
     void update_gesture();
 };
