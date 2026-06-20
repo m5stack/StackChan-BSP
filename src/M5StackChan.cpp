@@ -190,8 +190,8 @@ public:
             // deflection). Fall back to the commanded (spring) angle so callers that build a
             // relative move on top of getCurrentAngle() do not jerk the head to an extreme.
             int fallback_angle = uitk_intl::clamp(Servo::getCurrentAngle(), getAngleLimit().x, getAngleLimit().y);
-            ESP_LOGW(TAG, "Servo ID: %d ignore invalid current pos: %d, fallback angle: %d", _config.id,
-                     current_pos, fallback_angle);
+            ESP_LOGW(TAG, "Servo ID: %d ignore invalid current pos: %d, fallback angle: %d", _config.id, current_pos,
+                     fallback_angle);
             return fallback_angle;
         }
         int angle = raw_pos_to_angle(current_pos);
