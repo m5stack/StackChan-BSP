@@ -185,8 +185,17 @@ public:
     int getCurrentAngle() override
     {
         int current_pos = _scs_bus.ReadPos(_config.id);
-        int angle       = (current_pos - _zero_pos) * 5 * 10 / 16;
-        angle           = uitk_intl::clamp(angle, getAngleLimit().x, getAngleLimit().y);
+        if (!is_raw_pos_valid(current_pos)) {
+            // ReadPos failure returns -1, which would map to a large bogus angle (e.g. full
+            // deflection). Fall back to the commanded (spring) angle so callers that build a
+            // relative move on top of getCurrentAngle() do not jerk the head to an extreme.
+            int fallback_angle = uitk_intl::clamp(Servo::getCurrentAngle(), getAngleLimit().x, getAngleLimit().y);
+            ESP_LOGW(TAG, "Servo ID: %d ignore invalid current pos: %d, fallback angle: %d", _config.id,
+                     current_pos, fallback_angle);
+            return fallback_angle;
+        }
+        int angle = raw_pos_to_angle(current_pos);
+        angle     = uitk_intl::clamp(angle, getAngleLimit().x, getAngleLimit().y);
         // ESP_LOGI(TAG, "Servo ID: %d current pos: %d angle: %d", _id, current_pos, angle);
         return angle;
     }
@@ -214,7 +223,14 @@ public:
 
     void setCurrentAngleAsZero() override
     {
-        _zero_pos = _scs_bus.ReadPos(_config.id);
+        int current_pos = _scs_bus.ReadPos(_config.id);
+        if (!is_raw_pos_valid(current_pos)) {
+            // A failed read here would store -1 as the zero position and corrupt calibration.
+            ESP_LOGW(TAG, "Servo ID: %d ignore invalid zero calibration pos: %d, keep zero pos: %d", _config.id,
+                     current_pos, _zero_pos);
+            return;
+        }
+        _zero_pos = current_pos;
 
         Settings settings(_config.settingNs, true);
         settings.SetInt(_config.settingZeroPositionKey, _zero_pos);
@@ -238,6 +254,16 @@ public:
 
 private:
     enum class Mode { Position = 0, PWM = 1 };
+
+    bool is_raw_pos_valid(int raw_pos) const
+    {
+        return raw_pos >= _config.rawPosLimit.x && raw_pos <= _config.rawPosLimit.y;
+    }
+
+    int raw_pos_to_angle(int raw_pos) const
+    {
+        return (raw_pos - _zero_pos) * 5 * 10 / 16;
+    }
 
     ServoConfig_t _config;
     int _zero_pos      = 0;
