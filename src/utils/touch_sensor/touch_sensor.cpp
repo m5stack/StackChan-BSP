@@ -13,7 +13,9 @@ static const char* TAG = "TouchSensor";
 
 void TouchSensor_Class::begin()
 {
-    _touch_sensor = std::make_unique<Si12T>(SI12T_Type_High, SI12T_Sensitivity_Level_4);
+    // Match the original StackChan firmware (reg 0x33 = Type_Low/Level_3). The previous default
+    //   was the more sensitive Type_High/Level_4 (0xCC).
+    _touch_sensor = std::make_unique<Si12T>(SI12T_Type_Low, SI12T_Sensitivity_Level_3);
     _touch_sensor->begin();
 
     _in_gesture        = false;
