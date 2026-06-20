@@ -52,6 +52,36 @@ public:
      */
     bool wasSwipedBackward();
 
+    /**
+     * @brief Set the Si12T sensitivity type and level.
+     *
+     * @param type  SI12T_Type_Low (less sensitive) or SI12T_Type_High (more sensitive).
+     * @param level SI12T_Sensitivity_Level_0 .. _7.
+     */
+    void setSensitivity(SI12T_Type type, SI12T_Sensitivity_Level level);
+
+    /**
+     * @brief Set the response-time control (RTC, debounce). The actual response cycle is
+     *        (cycles + 2). Larger values reject spurious single-sample touches.
+     *
+     * @param cycles RTC[2:0], range 0-7.
+     */
+    void setResponseCycles(uint8_t cycles);
+
+    /**
+     * @brief Enter or leave the low-power sleep scan mode. Sleep lowers current draw but
+     *        lengthens response time.
+     *
+     * @param enable true = sleep mode, false = active mode.
+     */
+    void setSleep(bool enable);
+
+    /**
+     * @brief Force a reference (baseline) recalibration on all channels. Useful after an
+     *        external disturbance (e.g. power-rail switching) skews the idle baseline.
+     */
+    void recalibrate();
+
 private:
     std::unique_ptr<Si12T> _touch_sensor;
     std::array<uint8_t, 3> _intensities;

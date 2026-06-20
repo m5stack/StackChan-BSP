@@ -119,3 +119,31 @@ bool TouchSensor_Class::wasSwipedBackward()
 {
     return _swipe_result == SwipeDir::Backward;
 }
+
+void TouchSensor_Class::setSensitivity(SI12T_Type type, SI12T_Sensitivity_Level level)
+{
+    if (!_touch_sensor) return;
+    _touch_sensor->SI12T_Set_Sensitivity(static_cast<uint8_t>(type), static_cast<uint8_t>(level));
+}
+
+void TouchSensor_Class::setResponseCycles(uint8_t cycles)
+{
+    if (!_touch_sensor) return;
+    _touch_sensor->SI12T_Set_Config(_touch_sensor->cfg_ms, _touch_sensor->cfg_ftc, _touch_sensor->cfg_ilc, cycles);
+}
+
+void TouchSensor_Class::setSleep(bool enable)
+{
+    if (!_touch_sensor) return;
+    if (enable) {
+        _touch_sensor->sleep_enable();
+    } else {
+        _touch_sensor->sleep_disable();
+    }
+}
+
+void TouchSensor_Class::recalibrate()
+{
+    if (!_touch_sensor) return;
+    _touch_sensor->SI12T_Reset_Reference();
+}
