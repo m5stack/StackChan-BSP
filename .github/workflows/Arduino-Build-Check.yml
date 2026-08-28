@@ -1,0 +1,82 @@
+name: Arduino Build Check
+
+on:
+  push:
+    paths:
+      - '**.ino'
+      - '**.cpp'
+      - '**.hpp'
+      - '**.h'
+      - '**.c'
+      - 'library.properties'
+      - '.github/workflows/Arduino-Build-Check.yml'
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: examples (${{ matrix.board }}, M5Unified ${{ matrix.m5unified }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Latest arduino-esp32 with the released libraries (what a user gets from the Library Manager)
+          - board: esp32:esp32:esp32s3
+            esp32_version: 3.3.11
+            m5unified: release
+          # Same core with the development branches of M5Unified / M5GFX: catches API changes before they are released
+          - board: esp32:esp32:esp32s3
+            esp32_version: 3.3.11
+            m5unified: develop
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install arduino-cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh -s 1.1.1
+          echo "$PWD/bin" >> "$GITHUB_PATH"
+
+      - name: Install board package
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          CORE=$(echo "${{ matrix.board }}" | cut -d: -f1,2)
+          arduino-cli core install "${CORE}@${{ matrix.esp32_version }}"
+
+      - name: Install libraries
+        run: |
+          mkdir -p "$HOME/Arduino/libraries"
+          ln -s "$GITHUB_WORKSPACE" "$HOME/Arduino/libraries/StackChan-BSP"
+          arduino-cli lib update-index
+          # dependencies of library.properties; M5Unit-NFC pulls in M5UnitUnified / M5HAL / M5Utility
+          arduino-cli lib install IRremoteESP8266 M5Unit-NFC
+          if [ "${{ matrix.m5unified }}" = "develop" ]; then
+            git clone --depth 1 --branch develop https://github.com/m5stack/M5GFX.git "$HOME/Arduino/libraries/M5GFX"
+            git clone --depth 1 --branch develop https://github.com/m5stack/M5Unified.git "$HOME/Arduino/libraries/M5Unified"
+          else
+            arduino-cli lib install M5Unified
+          fi
+          arduino-cli lib list
+
+      - name: Build examples
+        run: |
+          status=0
+          for ino in $(find examples -name '*.ino' | sort); do
+            echo "::group::$ino"
+            if arduino-cli compile --fqbn "${{ matrix.board }}" --warnings default "$ino"; then
+              echo "OK   $ino"
+            else
+              echo "FAIL $ino"
+              status=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $status
