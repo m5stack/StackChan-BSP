@@ -59,6 +59,15 @@ public:
     int8_t SI12T_Set_Sensitivity(uint8_t sens_type, uint8_t sens_level);
     uint8_t set_sens(uint8_t value);
     void SI12T_Get_Sensitivity(void);
+    // Compose and write the CFIG register (0x08 = MS | FTC[1:0] | ILC[1:0] | RTC[2:0]).
+    //   rtc raises the response cycle (= rtc + 2), i.e. the debounce against false touches.
+    int8_t SI12T_Set_Config(uint8_t ms, uint8_t ftc, uint8_t ilc, uint8_t rtc);
+    // Force a reference-value (baseline) update on all channels (Ref_rst 0x0A/0x0B).
+    void SI12T_Reset_Reference(void);
+    // Read-back helpers. Return the raw register byte (0-255), or -1 on I2C read failure.
+    int SI12T_Read_Sensitivity(void);  // SEN1 (0x02)
+    int SI12T_Read_Config(void);       // CFIG (0x08)
+    int SI12T_Read_Ctrl(void);         // CTRL (0x09)
     void set_Ctrl1(void);
     void set_Ctrl2(void);
     void sleep_enable(void);
@@ -69,6 +78,11 @@ public:
 
     uint8_t sens_type  = SI12T_Type_Low;
     uint8_t sens_level = SI12T_Sensitivity_Level_0;
+    // CFIG (0x08) fields. Defaults reproduce the original 0x22 register value.
+    uint8_t cfg_ms  = 0;  // MS:  0 = auto (fast/slow) mode, 1 = fast mode
+    uint8_t cfg_ftc = 1;  // FTC[1:0]: first-touch recalibration time (01 = 10 s)
+    uint8_t cfg_ilc = 0;  // ILC[1:0]: interrupt level control
+    uint8_t cfg_rtc = 2;  // RTC[2:0]: response cycle - 2 (debounce); response cycle = rtc + 2
     byte touch_result;
     uint8_t point_type[3];
 };
