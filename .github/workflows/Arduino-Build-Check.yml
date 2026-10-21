@@ -54,7 +54,7 @@ jobs:
       - name: Install libraries
         run: |
           mkdir -p "$HOME/Arduino/libraries"
-          ln -s "$GITHUB_WORKSPACE" "$HOME/Arduino/libraries/StackChan-BSP"
+          ln -s "$GITHUB_WORKSPACE" "$HOME/Arduino/libraries/M5StackChan"
           arduino-cli lib update-index
           # dependencies of library.properties; M5Unit-NFC pulls in M5UnitUnified / M5HAL / M5Utility
           arduino-cli lib install IRremoteESP8266 M5Unit-NFC
