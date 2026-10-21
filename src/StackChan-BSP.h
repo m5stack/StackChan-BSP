@@ -4,5 +4,5 @@
  * SPDX-License-Identifier: MIT
  */
 #pragma once
-// Header named after the library (Arduino Library Specification); the API lives in M5StackChan.h
+// Compatibility header for sketches using StackChan-BSP.h; the API lives in M5StackChan.h
 #include "M5StackChan.h"
